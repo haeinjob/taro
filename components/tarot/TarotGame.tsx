@@ -55,7 +55,7 @@ export default function TarotGame() {
 
   return (
     <main
-      className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden"
+      className={`relative min-h-screen flex flex-col items-center justify-center ${stage === 'fan' ? '' : 'overflow-hidden'}`}
       style={{ background: 'var(--color-bg)' }}
     >
       <div className="stars-bg" />

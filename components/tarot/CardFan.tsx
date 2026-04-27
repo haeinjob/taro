@@ -41,44 +41,47 @@ export default function CardFan({ cards, onPick }: Props) {
 
         <div
           ref={scrollRef}
-          className="flex overflow-x-scroll"
           style={{
+            overflowX: 'scroll',
             scrollbarWidth: 'none',
             msOverflowStyle: 'none',
-            paddingTop: 60,
+            paddingTop: 100,
             paddingBottom: 24,
             paddingLeft: 24,
             paddingRight: 24,
             cursor: 'grab',
           }}
         >
-          {cards.map((drawn, i) => {
-            const yWobble = [0, -6, 3, -3, 5, -2, 4][i % 7]
-            return (
-              <motion.button
-                key={drawn.card.id}
-                onClick={() => onPick(drawn)}
-                className="card-back flex-shrink-0 rounded-xl cursor-pointer"
-                style={{
-                  width: 60,
-                  height: 92,
-                  marginLeft: i === 0 ? 0 : -32,
-                  position: 'relative',
-                  zIndex: i,
-                }}
-                initial={{ opacity: 0, y: yWobble + 24 }}
-                animate={{ opacity: 1, y: yWobble }}
-                transition={{ ...SPRING.settle, delay: Math.min(i * 0.006, 0.35) }}
-                whileHover={{
-                  y: yWobble - 52,
-                  scale: 1.25,
-                  zIndex: 300,
-                  transition: SPRING.jelly,
-                }}
-                whileTap={{ scale: 0.92, zIndex: 300, transition: SPRING.snappy }}
-              />
-            )
-          })}
+          <div style={{ display: 'flex', width: 'max-content', position: 'relative' }}>
+            {cards.map((drawn, i) => {
+              const yWobble = [0, -6, 3, -3, 5, -2, 4][i % 7]
+              return (
+                <motion.button
+                  key={drawn.card.id}
+                  onClick={() => onPick(drawn)}
+                  className="card-back rounded-xl cursor-pointer"
+                  style={{
+                    width: 60,
+                    height: 92,
+                    flexShrink: 0,
+                    marginLeft: i === 0 ? 0 : -32,
+                    position: 'relative',
+                    zIndex: i,
+                  }}
+                  initial={{ opacity: 0, y: yWobble + 24 }}
+                  animate={{ opacity: 1, y: yWobble }}
+                  transition={{ ...SPRING.settle, delay: Math.min(i * 0.006, 0.35) }}
+                  whileHover={{
+                    y: yWobble - 52,
+                    scale: 1.25,
+                    zIndex: 300,
+                    transition: SPRING.jelly,
+                  }}
+                  whileTap={{ scale: 0.92, zIndex: 300, transition: SPRING.snappy }}
+                />
+              )
+            })}
+          </div>
         </div>
       </div>
     </div>
