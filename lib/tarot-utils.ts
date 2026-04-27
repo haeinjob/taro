@@ -15,6 +15,50 @@ export interface SavedDraw {
   fortune: string
 }
 
+export interface IntakeAnswers {
+  q1: string   // 짧은 텍스트
+  q2: string   // 버튼 선택
+  q3: string   // 버튼 선택
+}
+
+export interface TarotResult {
+  cardInterpretation: string
+  personalMessage: string
+  keyword: string
+  color: { name: string; hex: string }
+  mantra: string
+  isFallback: boolean
+}
+
+export interface IntakeQuestion {
+  text: string
+  type: 'text' | 'buttons'
+  options?: string[]
+}
+
+export const INTAKE_QUESTIONS: Record<Category, [IntakeQuestion, IntakeQuestion, IntakeQuestion]> = {
+  today: [
+    { text: '지금 가장 마음에 걸리는 게 하나만 말해줘요.', type: 'text' },
+    { text: '지금 나의 에너지는?', type: 'buttons', options: ['지쳐있어', '불안해', '뭔가 기대돼', '그냥 평범해'] },
+    { text: '오늘 어떤 말을 듣고 싶어요?', type: 'buttons', options: ['응원', '솔직한 조언', '그냥 내 편 들어줘', '방향 잡아줘'] },
+  ],
+  love: [
+    { text: '지금 그 사람 생각하면 드는 감정 하나만.', type: 'text' },
+    { text: '이 관계에서 지금 내가 원하는 건?', type: 'buttons', options: ['더 가까워지고 싶어', '명확히 하고 싶어', '그냥 안심하고 싶어', '잊고 싶어'] },
+    { text: '상대에게 지금 가장 바라는 건?', type: 'buttons', options: ['관심', '솔직함', '행동', '그냥 곁에 있어줬으면'] },
+  ],
+  career: [
+    { text: '요즘 일하면서 가장 힘든 게 뭐예요?', type: 'text' },
+    { text: '지금 내 상황은?', type: 'buttons', options: ['새로운 시작 앞', '막혀있어', '선택 기로', '지쳐서 쉬고 싶어'] },
+    { text: '오늘 일에서 원하는 건?', type: 'buttons', options: ['돌파구', '버텨낼 힘', '방향 확신', '작은 성취'] },
+  ],
+  money: [
+    { text: '요즘 돈 얘기 나오면 드는 감정이 뭐예요?', type: 'text' },
+    { text: '지금 금전 상황은?', type: 'buttons', options: ['여유있어', '빠듯해', '큰 결정 앞', '불확실해'] },
+    { text: '오늘 바라는 건?', type: 'buttons', options: ['안심', '기회 신호', '절약 팁', '그냥 잘 될 거라는 말'] },
+  ],
+}
+
 export function drawCard(): DrawnCard {
   const idx = Math.floor(Math.random() * TAROT_CARDS.length)
   const isReversed = Math.random() < 0.5

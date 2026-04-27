@@ -1,0 +1,7 @@
+{
+  "tool_name": "Bash",
+  "tool_input_preview": "{\"command\":\"type \\\"C:\\\\Users\\\\haein\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\c--Users-haein-OneDrive-Desktop----------\\\\9680d171-ad7b-4465-bd49-5d69cc808e14\\\\tasks\\\\bv2565skb.output\\\"\",\"description\":\"Read push ...",
+  "error": "Exit code 1\n/usr/bin/bash: line 1: type: C:\\Users\\haein\\AppData\\Local\\Temp\\claude\\c--Users-haein-OneDrive-Desktop----------\\9680d171-ad7b-4465-bd49-5d69cc808e14\\tasks\\bv2565skb.output: not found",
+  "timestamp": "2026-04-27T02:50:18.422Z",
+  "retry_count": 1
+}

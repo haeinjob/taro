@@ -145,6 +145,18 @@
       "type": "file"
     },
     {
+      "path": ".env.local.example",
+      "accessCount": 2,
+      "lastAccessed": 1777274185782,
+      "type": "file"
+    },
+    {
+      "path": "README.md",
+      "accessCount": 2,
+      "lastAccessed": 1777274229127,
+      "type": "file"
+    },
+    {
       "path": "components\\tarot\\CategorySelect.tsx",
       "accessCount": 1,
       "lastAccessed": 1777173930463,
@@ -169,9 +181,9 @@
       "type": "file"
     },
     {
-      "path": ".env.local.example",
+      "path": "package.json",
       "accessCount": 1,
-      "lastAccessed": 1777173986935,
+      "lastAccessed": 1777274186192,
       "type": "file"
     }
   ],

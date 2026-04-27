@@ -1,80 +1,99 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { TAROT_CARDS } from '@/data/tarot-cards'
-import { CATEGORY_META, Category } from '@/lib/tarot-utils'
+import { CATEGORY_META, Category, IntakeAnswers } from '@/lib/tarot-utils'
 
-const SYSTEM_PROMPT = `당신은 친절하고 전문적인 타로 리딩 전문가입니다.
+const SYSTEM_PROMPT = `당신은 사용자가 가장 믿는 친구이자 솔직한 응원자입니다.
+타로 카드를 읽지만, 신비롭거나 모호하게 말하지 않습니다.
+"너 지금 이런 거 아냐?" 하고 꿰뚫어보는 직접성과, 진심으로 내 편인 따뜻함이 공존합니다.
 
-[말투]
-- 해요체 기반 부드러운 구어체 ("~해요", "~거예요", "~세요")
-- 따뜻하지만 현실적. 근거 없는 낙관 금지.
+[페르소나]
+- 2인칭 직접 호칭: "너", "네가", "지금 네 상황"
+- 말투: 반말에 가까운 편안한 해요체. "~거잖아요", "~해봐요", "알죠?"
+- 모호한 위로 금지. 근거 없는 낙관 금지.
+- 카드의 상징과 에너지를 실제 상황에 연결해 해석.
 
-[출력 구조 — 반드시 이 순서]
-1. 헤드라인: 대괄호로 감싼 오늘의 운세 제목. 예: [환하게 빛나는 확신의 하루]
-2. 카드 해석: 카드 이미지·상징 활용한 상황 묘사 + 핵심 메시지 (2~3문장)
-3. 행동 조언: 오늘 구체적으로 취할 행동 또는 태도 1가지 (1~2문장)
+[출력 형식 — 반드시 JSON]
+{
+  "cardInterpretation": "이 카드 자체가 가진 에너지와 상징 (2-3문장, 카드 이름 없이)",
+  "personalMessage": "사용자의 상황을 반영한 직접적인 메시지. 인테이크 답변을 구체적으로 언급하거나 반영. 3-4문장.",
+  "keyword": "오늘의 핵심 키워드 (1-2단어)",
+  "color": { "name": "색이름 (한국어)", "hex": "#RRGGBB" },
+  "mantra": "오늘 하루 마음에 품고 다닐 짧은 문장. 직접적이고 힘있게."
+}
 
-[길이] 헤드라인 제외 본문 150~200자 (공백 포함).
+[색깔 선택 기준]
+카드의 에너지와 어울리는 색. 예: 열정/행동→진홍(#dc2626), 직관/영성→보라(#7c3aed),
+감정/관계→장미(#f43f5e), 성장/새시작→에메랄드(#059669), 안정/물질→황금(#d97706),
+지성/명료→하늘(#0284c7), 균형/조화→라벤더(#8b5cf6)
 
-[금지] "망한다", "걱정하지 마", "잘 될 거야", "파이팅", "화이팅",
-"우주가", "끌어당김", "행운이 함께", "긍정적으로 생각하면"
+[절대 금지]
+"우주가", "끌어당김", "에너지가 흐른다", "긍정적으로", "파이팅", "화이팅",
+"걱정하지 마세요", "잘 될 거예요", "행운이 함께", "모든 것이 잘"
 
-[출력] 헤드라인 + 본문만. 카드 이름·레이블 없이.`
+[길이]
+cardInterpretation: 70-100자, personalMessage: 100-140자, keyword: 10자 이내, mantra: 25자 이내`
 
-const FEW_SHOT = [
-  {
-    role: 'user' as const,
-    content: `날짜: 오늘\n카드: 태양 (The Sun) — 정방향\n의미: 순수한 기쁨과 성공, 자신감과 활력\n키워드: 성공, 기쁨, 활력\n운세 종류: 오늘 하루 전반적인 운세와 흐름을 읽어주세요.`
-  },
-  {
-    role: 'assistant' as const,
-    content: `[환하게 빛나는 확신의 하루]\n구름 한 점 없는 태양 아래 서 있는 것처럼 당신의 앞길이 명확해지는 날입니다. 그동안 고민하던 문제가 있다면 오늘 드디어 해답을 찾게 될 거예요. 카드 속 어린아이처럼 순수한 마음으로 사람들을 대하세요. 오늘은 스스로를 의심하지 말고, 가장 하고 싶었던 일을 제1순위로 추진해 보세요.`
-  },
-  {
-    role: 'user' as const,
-    content: `날짜: 오늘\n카드: 탑 (The Tower) — 역방향\n의미: 붕괴가 지연되거나 회피됨, 두려움\n키워드: 변화 저항, 두려움, 내실 점검\n운세 종류: 오늘 하루 전반적인 운세와 흐름을 읽어주세요.`
-  },
-  {
-    role: 'assistant' as const,
-    content: `[폭풍이 지나간 자리의 평온]\n갑작스러운 변화나 계획의 수정이 생길 수 있지만, 너무 당황하지 마세요. 역방향의 탑은 위태로웠던 상황이 완전히 무너지기 직전에 멈추거나, 오히려 불필요한 것들이 정리되는 과정임을 뜻합니다. 억지로 상황을 되돌리려 애쓰기보다는 오늘은 기존 환경을 점검하고 내실을 다지는 데 집중하는 것이 훨씬 이롭습니다.`
-  },
-  {
-    role: 'user' as const,
-    content: `날짜: 오늘\n카드: 펜타클 3 (Three of Pentacles) — 정방향\n의미: 팀워크와 협업, 전문성 인정\n키워드: 협동, 성취, 전문성\n운세 종류: 오늘 하루 전반적인 운세와 흐름을 읽어주세요.`
-  },
-  {
-    role: 'assistant' as const,
-    content: `[협동과 성취의 즐거움]\n혼자 끙끙 앓던 일에 든든한 조력자가 나타나거나, 팀 프로젝트에서 당신의 능력을 인정받게 되는 날입니다. 전문적인 지식을 나누거나 타인의 조언을 경청할 때 성과가 극대화됩니다. 오후 시간대에는 동료나 지인과의 소통을 주저하지 마세요. 성실함이 곧 수익으로 연결되는 운의 흐름입니다.`
-  },
-]
+type FallbackResult = {
+  cardInterpretation: string
+  personalMessage: string
+  keyword: string
+  color: { name: string; hex: string }
+  mantra: string
+}
 
-const FALLBACK_FORTUNES: Record<string, string[]> = {
+const FALLBACKS: Record<Category, FallbackResult[]> = {
   today: [
-    '[오늘을 온전히 느끼는 하루]\n오늘은 특별히 무언가를 이루려 하기보다, 지금 이 순간에 집중해 보세요. 작은 것들이 모여 큰 흐름을 만들어요. 오늘 하루 한 가지만 제대로 해내도 충분해요.',
-    '[조용한 확신의 날]\n서두르지 않아도 괜찮아요. 오늘은 천천히, 하지만 확실하게 나아가는 날이에요. 자신을 믿고 한 발씩 내딛어 보세요.',
+    {
+      cardInterpretation: '지금 이 카드는 멈춰서 자신을 돌아보길 요청하고 있어요. 바깥이 아니라 안쪽을 봐야 할 때입니다.',
+      personalMessage: '오늘은 많이 하려 하지 말아요. 지금 네가 느끼는 게 뭔지, 그것만 제대로 알아도 충분한 하루예요. 서두르면 놓치는 게 생겨요.',
+      keyword: '내면 집중',
+      color: { name: '라벤더', hex: '#8b5cf6' },
+      mantra: '오늘 나는 나 자신에게 충분하다.',
+    },
   ],
   love: [
-    '[마음이 열리는 순간]\n오늘 주변을 조금 더 따뜻한 눈으로 바라봐 보세요. 연애운은 결국 내 마음의 상태에서 시작돼요. 먼저 자신을 사랑하는 하루를 만들어 보세요.',
-    '[감정에 솔직해지는 날]\n오늘은 하고 싶었던 말을 조금 더 솔직하게 표현해 보세요. 진심은 언제나 통한답니다.',
+    {
+      cardInterpretation: '감정이 복잡하게 얽혀있을 때 나오는 카드예요. 마음이 원하는 것과 두려워하는 것이 충돌하고 있어요.',
+      personalMessage: '지금 네 감정이 뭔지, 그 사람한테 뭘 원하는 건지 먼저 네가 알아야 해요. 상대보다 나 자신한테 솔직해지는 게 먼저예요.',
+      keyword: '솔직함',
+      color: { name: '장미', hex: '#f43f5e' },
+      mantra: '내 마음에 솔직한 것이 용기다.',
+    },
   ],
   career: [
-    '[집중력이 빛나는 날]\n오늘 시작한 일은 끝까지 마무리할 에너지가 있어요. 하나에 집중하면 생각보다 빠르게 성과가 나올 거예요.',
-    '[새로운 시각이 열리는 날]\n익숙한 방식 말고 다른 접근을 시도해 보세요. 오늘은 관점을 바꾸는 것만으로도 돌파구가 생길 수 있어요.',
+    {
+      cardInterpretation: '막혀있는 것처럼 느껴지지만, 실제로는 다음 단계를 위한 준비가 진행 중인 상태예요.',
+      personalMessage: '지금 답답하다고 느끼는 거 맞아요. 근데 이 막힘이 무능함의 신호가 아니라 쌓이고 있다는 신호예요. 오늘 하나만 제대로 마무리해봐요.',
+      keyword: '묵묵히 전진',
+      color: { name: '황금', hex: '#d97706' },
+      mantra: '작은 완료가 큰 흐름을 만든다.',
+    },
   ],
   money: [
-    '[신중함이 답인 날]\n오늘은 큰 결정보다 작은 것들을 점검하는 날이에요. 지출을 한 번 더 확인하고, 불필요한 것은 과감히 줄여보세요.',
-    '[기회를 알아보는 눈]\n오늘 주변의 작은 정보들에 귀 기울여 보세요. 재물운은 조용히 신호를 보내고 있을지도 몰라요.',
+    {
+      cardInterpretation: '지금 당장의 숫자보다 흐름을 봐야 할 때예요. 작은 구멍들을 먼저 막는 게 중요한 시기입니다.',
+      personalMessage: '큰 변화보다 오늘 작은 것 하나 점검하는 게 더 효과적이에요. 지금 쓰는 돈 중에 "없어도 됐던 것"이 반드시 있어요.',
+      keyword: '신중한 점검',
+      color: { name: '에메랄드', hex: '#059669' },
+      mantra: '내가 가진 것을 먼저 제대로 본다.',
+    },
   ],
 }
 
 export async function POST(req: NextRequest) {
   try {
-    const { cardId, isReversed, category = 'today' } = await req.json()
+    const { cardId, isReversed, category = 'today', intakeAnswers } = await req.json() as {
+      cardId: number
+      isReversed: boolean
+      category: Category
+      intakeAnswers?: IntakeAnswers
+    }
 
     const card = TAROT_CARDS.find(c => c.id === cardId)
     if (!card) return NextResponse.json({ error: 'INVALID_CARD' }, { status: 400 })
 
-    const catMeta = CATEGORY_META[category as Category]
+    const catMeta = CATEGORY_META[category]
     const direction = isReversed ? '역방향' : '정방향'
     const meaning   = isReversed ? card.reversedMeaning : card.uprightMeaning
     const keywords  = isReversed ? card.reversedKeywords : card.uprightKeywords
@@ -83,35 +102,44 @@ export async function POST(req: NextRequest) {
       year: 'numeric', month: 'long', day: 'numeric', weekday: 'long',
     })
 
-    const userMessage = `날짜: ${today}\n카드: ${card.nameKo} (${card.nameEn}) — ${direction}\n의미: ${meaning}\n키워드: ${keywords.join(', ')}\n운세 종류: ${catMeta.prompt}`
+    const intakeSection = intakeAnswers
+      ? `\n[사용자가 말한 상황]\n- 고민/상황: "${intakeAnswers.q1}"\n- 현재 에너지/감정: "${intakeAnswers.q2}"\n- 듣고 싶은 것: "${intakeAnswers.q3}"`
+      : ''
+
+    const userMessage = `날짜: ${today}
+카드: ${card.nameKo} (${card.nameEn}) — ${direction}
+카드 의미: ${meaning}
+카드 키워드: ${keywords.join(', ')}
+운세 종류: ${catMeta.label}${intakeSection}
+
+위 정보를 바탕으로 JSON을 출력하세요.`
 
     if (!process.env.ANTHROPIC_API_KEY) {
-      const pool = FALLBACK_FORTUNES[category] ?? FALLBACK_FORTUNES.today
-      const fortune = pool[Math.floor(Math.random() * pool.length)]
-      return NextResponse.json({
-        fortune,
-        card: { id: card.id, nameKo: card.nameKo, nameEn: card.nameEn, isReversed, keywords },
-        isFallback: true,
-      })
+      const pool = FALLBACKS[category] ?? FALLBACKS.today
+      const fallback = pool[Math.floor(Math.random() * pool.length)]
+      return NextResponse.json({ ...fallback, isFallback: true })
     }
 
     const client = new Anthropic()
     const message = await client.messages.create({
       model: 'claude-haiku-4-5',
-      max_tokens: 400,
+      max_tokens: 600,
       system: SYSTEM_PROMPT,
-      messages: [...FEW_SHOT, { role: 'user', content: userMessage }],
+      messages: [{ role: 'user', content: userMessage }],
     })
 
-    const fortune = message.content[0].type === 'text' ? message.content[0].text : ''
+    const raw = message.content[0].type === 'text' ? message.content[0].text : ''
 
-    return NextResponse.json({
-      fortune,
-      card: { id: card.id, nameKo: card.nameKo, nameEn: card.nameEn, isReversed, keywords },
-      isFallback: false,
-    })
+    // JSON 파싱 — 마크다운 코드블록 제거 후 파싱
+    const jsonMatch = raw.match(/\{[\s\S]*\}/)
+    if (!jsonMatch) throw new Error('JSON not found in response')
+    const parsed = JSON.parse(jsonMatch[0])
+
+    return NextResponse.json({ ...parsed, isFallback: false })
   } catch (err) {
     console.error('[tarot/route]', err)
-    return NextResponse.json({ error: 'LLM_ERROR' }, { status: 500 })
+    // fallback 반환
+    const fallback = FALLBACKS.today[0]
+    return NextResponse.json({ ...fallback, isFallback: true })
   }
 }
