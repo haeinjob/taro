@@ -20,7 +20,7 @@ export default function TarotGame() {
 
   function handleCategorySelect(cat: Category) {
     setCategory(cat)
-    setFanCards(drawFanCards(5))
+    setFanCards(drawFanCards(78))
     setStage('shuffle')
   }
 
