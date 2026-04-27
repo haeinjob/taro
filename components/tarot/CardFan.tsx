@@ -13,7 +13,7 @@ export default function CardFan({ cards, onPick }: Props) {
   const scrollRef = useRef<HTMLDivElement>(null)
 
   return (
-    <div className="flex flex-col items-center gap-8 w-full">
+    <div className="flex flex-col items-center gap-6 w-full">
       <motion.div
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
@@ -28,45 +28,54 @@ export default function CardFan({ cards, onPick }: Props) {
         </p>
       </motion.div>
 
-      {/* 카드 전체 가로 스크롤 */}
-      <div className="relative w-full" style={{ maxWidth: '100vw' }}>
-        {/* 좌우 페이드 */}
+      {/* 좌우 페이드 + 스크롤 컨테이너 */}
+      <div className="relative w-full">
         <div
-          className="absolute left-0 top-0 bottom-0 w-12 z-10 pointer-events-none"
-          style={{ background: 'linear-gradient(to right, #09090f, transparent)' }}
+          className="absolute left-0 top-0 bottom-0 w-10 pointer-events-none"
+          style={{ background: 'linear-gradient(to right, #09090f, transparent)', zIndex: 10 }}
         />
         <div
-          className="absolute right-0 top-0 bottom-0 w-12 z-10 pointer-events-none"
-          style={{ background: 'linear-gradient(to left, #09090f, transparent)' }}
+          className="absolute right-0 top-0 bottom-0 w-10 pointer-events-none"
+          style={{ background: 'linear-gradient(to left, #09090f, transparent)', zIndex: 10 }}
         />
 
         <div
           ref={scrollRef}
-          className="flex gap-2 overflow-x-auto px-8"
+          className="flex overflow-x-scroll"
           style={{
             scrollbarWidth: 'none',
-            paddingTop: 48,
+            msOverflowStyle: 'none',
+            paddingTop: 60,
             paddingBottom: 24,
+            paddingLeft: 24,
+            paddingRight: 24,
+            cursor: 'grab',
           }}
         >
           {cards.map((drawn, i) => {
-            const wobble = [0, -8, 4, -4, 8, -2, 6][i % 7]
+            const yWobble = [0, -6, 3, -3, 5, -2, 4][i % 7]
             return (
               <motion.button
                 key={drawn.card.id}
                 onClick={() => onPick(drawn)}
                 className="card-back flex-shrink-0 rounded-xl cursor-pointer"
-                style={{ width: 52, height: 82 }}
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: wobble }}
-                transition={{ ...SPRING.settle, delay: Math.min(i * 0.008, 0.4) }}
+                style={{
+                  width: 60,
+                  height: 92,
+                  marginLeft: i === 0 ? 0 : -32,
+                  position: 'relative',
+                  zIndex: i,
+                }}
+                initial={{ opacity: 0, y: yWobble + 24 }}
+                animate={{ opacity: 1, y: yWobble }}
+                transition={{ ...SPRING.settle, delay: Math.min(i * 0.006, 0.35) }}
                 whileHover={{
-                  y: wobble - 36,
-                  scale: 1.18,
-                  zIndex: 20,
+                  y: yWobble - 52,
+                  scale: 1.25,
+                  zIndex: 300,
                   transition: SPRING.jelly,
                 }}
-                whileTap={{ scale: 0.92, transition: SPRING.snappy }}
+                whileTap={{ scale: 0.92, zIndex: 300, transition: SPRING.snappy }}
               />
             )
           })}
