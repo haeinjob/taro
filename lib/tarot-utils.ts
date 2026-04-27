@@ -46,6 +46,16 @@ export function loadDraw(category: Category): SavedDraw | null {
   try { return JSON.parse(raw) } catch { return null }
 }
 
+export function getCardImage(card: TarotCard): string {
+  if (card.arcana === 'major') {
+    return `/cards/major-${String(card.id).padStart(2, '0')}.jpg`
+  }
+  const offsets: Record<string, number> = { wands: 21, cups: 35, swords: 49, pentacles: 63 }
+  const suit = card.suit === 'pentacles' ? 'pents' : card.suit!
+  const num = String(card.id - offsets[card.suit!]).padStart(2, '0')
+  return `/cards/${suit}-${num}.jpg`
+}
+
 export const CATEGORY_META: Record<Category, { label: string; emoji: string; prompt: string }> = {
   today:  { label: '오늘의 운세', emoji: '🌟', prompt: '오늘 하루 전반적인 운세와 흐름을 읽어주세요.' },
   love:   { label: '연애운',      emoji: '💕', prompt: '오늘의 연애운과 관계에서의 감정 흐름을 읽어주세요.' },

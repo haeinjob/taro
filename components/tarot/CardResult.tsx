@@ -1,7 +1,8 @@
 'use client'
 import { useState, useEffect } from 'react'
+import Image from 'next/image'
 import { motion } from 'framer-motion'
-import { DrawnCard, Category, CATEGORY_META } from '@/lib/tarot-utils'
+import { DrawnCard, Category, CATEGORY_META, getCardImage } from '@/lib/tarot-utils'
 import { SPRING, BTN, POP } from '@/lib/animation'
 
 interface Props {
@@ -46,24 +47,32 @@ export default function CardResult({ drawn, category, fortune, isFallback, onRes
         />
         {/* Front face */}
         <motion.div
-          className="card-front absolute inset-0 rounded-2xl flex flex-col items-center justify-center gap-3"
+          className="absolute inset-0 rounded-2xl overflow-hidden border"
           initial={{ rotateY: -90, opacity: 0 }}
           animate={{ rotateY: flipped ? 0 : -90, opacity: flipped ? 1 : 0 }}
           transition={{ duration: 0.3, ease: 'easeOut', delay: flipped ? 0.3 : 0 }}
-          style={{ backfaceVisibility: 'hidden' }}
+          style={{ backfaceVisibility: 'hidden', borderColor: 'var(--color-gold)' }}
         >
-          <span
-            className="text-5xl leading-none"
-            style={{ display: 'inline-block', transform: isReversed ? 'rotate(180deg)' : 'none' }}
+          <div style={{ transform: isReversed ? 'rotate(180deg)' : 'none', width: '100%', height: '100%' }}>
+            <Image
+              src={getCardImage(card)}
+              alt={card.nameKo}
+              fill
+              style={{ objectFit: 'cover' }}
+              sizes="144px"
+            />
+          </div>
+          <div
+            className="absolute bottom-0 left-0 right-0 flex justify-between items-center px-2 py-1"
+            style={{ background: 'linear-gradient(transparent, #000000cc)' }}
           >
-            {card.emoji}
-          </span>
-          <span className="text-xs text-center px-2" style={{ color: 'var(--color-gold)' }}>
-            {card.nameKo}
-          </span>
-          <span className="text-[10px]" style={{ color: 'var(--color-text-dim)' }}>
-            {isReversed ? '역방향' : '정방향'}
-          </span>
+            <span className="text-[10px] font-medium" style={{ color: 'var(--color-gold)' }}>
+              {card.nameKo}
+            </span>
+            <span className="text-[9px]" style={{ color: 'var(--color-text-dim)' }}>
+              {isReversed ? '역' : '정'}
+            </span>
+          </div>
         </motion.div>
       </div>
 
