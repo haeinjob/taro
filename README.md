@@ -1,36 +1,74 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 타로 오늘의 운세 앱
 
-## Getting Started
+Next.js 16 + Framer Motion + Claude Haiku 기반 타로 운세 웹앱.
 
-First, run the development server:
+---
+
+## 배포 방법 (Vercel)
+
+### 1단계 — Anthropic API 키 발급
+
+1. [console.anthropic.com](https://console.anthropic.com) 접속 → 회원가입 / 로그인
+2. **API Keys** 메뉴 → **Create Key**
+3. 키 복사해두기 (`sk-ant-...` 형태)
+
+> API 키가 없어도 앱은 작동합니다. 운세 텍스트가 기본값(fallback)으로 표시될 뿐입니다.
+
+---
+
+### 2단계 — Vercel 배포
+
+1. [vercel.com](https://vercel.com) 로그인 후 **Add New → Project**
+2. GitHub 레포 `haeinjob/taro` 선택 → **Import**
+3. **Environment Variables** 섹션에서 아래 변수 추가:
+
+   | Name | Value |
+   |------|-------|
+   | `ANTHROPIC_API_KEY` | `sk-ant-여기에붙여넣기` |
+
+4. **Deploy** 클릭
+
+빌드가 완료되면 Vercel이 자동으로 URL을 발급합니다.
+
+---
+
+### 배포 후 확인
+
+- 카테고리 선택 (오늘/연애/직업/금전) → 카드 섞기 → 카드 선택 → 운세 확인
+- 운세 텍스트가 나오면 API 연결 성공
+- 하단에 `* API 키 없이 기본 운세를 표시하고 있어요` 문구가 보이면 환경변수 재확인
+
+---
+
+## 로컬 실행 (선택)
 
 ```bash
+git clone https://github.com/haeinjob/taro.git
+cd taro
+
+# 의존성 설치
+npm install
+
+# 환경변수 설정
+cp .env.local.example .env.local
+# .env.local 파일 열어서 ANTHROPIC_API_KEY= 뒤에 키 입력
+
+# 개발 서버 실행
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+브라우저에서 [http://localhost:3000](http://localhost:3000) 접속.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+---
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 기술 스택
 
-## Learn More
+| 항목 | 버전 |
+|------|------|
+| Next.js | 16.2.4 (App Router) |
+| React | 19 |
+| Framer Motion | 12 |
+| Tailwind CSS | v4 |
+| Claude Haiku | claude-haiku-4-5 |
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+카드 이미지: 라이더-웨이트 타로 78장 (1909년, 퍼블릭 도메인)
